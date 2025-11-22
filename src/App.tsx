@@ -1,27 +1,33 @@
-
-import Home from "./pages/Home";
-import { Navbar } from "./component/Navbar";
-import WelcomePage from "./component/WelcomePage";
-import { useAuth } from "./context/AuthContext1";
+import { Dashboard } from "./pages/Dashboard"
+import { useAuth } from "./context/AuthContext1"
+import { Button } from "./components/ui/button"
+import { Loader2 } from "lucide-react"
 
 function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, signInWithGithub } = useAuth()
 
-  // عرض صفحة الترحيب إذا لم يكن المستخدم مسجلاً
-  if (!loading && !user) {
-    return <WelcomePage />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
-  return (
-    <>
-      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-all duration-300 pt-20">
-        <Navbar />
-        <div className="container mx-auto px-4 py-6">
-          <Home />
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold text-foreground">
+            يرجى تسجيل الدخول للوصول إلى Dashboard
+          </h1>
+          <Button onClick={signInWithGithub}>تسجيل الدخول</Button>
         </div>
       </div>
-    </>
-  );
+    )
+  }
+
+  return <Dashboard />
 }
 
 export default App;
