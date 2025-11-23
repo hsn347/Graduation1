@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { supabase } from "@/CliantSupa"
-import { Loader2, MessageSquare, Phone, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react"
+import { Loader2, MessageSquare, Phone, Clock, XCircle } from "lucide-react"
 
 interface WhatsAppMessage {
   id: string

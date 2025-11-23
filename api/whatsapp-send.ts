@@ -29,7 +29,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { to, message, type, templateName, templateLanguage } = req.body;
+    const { to, message, type, templateName } = req.body;
 
     // التحقق من البيانات المطلوبة
     if (!to) {
