@@ -12,6 +12,7 @@ import {
   getAppInfo,
   whatsappConfig,
 } from "@/lib/whatsapp-api"
+import { greenApiConfig } from "@/lib/green-api"
 import { Loader2, Send, CheckCircle2, XCircle, Info } from "lucide-react"
 import { Select } from "@/components/ui/select"
 
@@ -178,8 +179,8 @@ export const WhatsAppManager = () => {
         </p>
       </div>
 
-      {/* تحذير إذا كان Phone Number ID غير محدد */}
-      {!whatsappConfig.phoneNumberId && (
+      {/* تحذير إذا كانت بيانات API غير مكتملة */}
+      {!greenApiConfig.apiUrl && !whatsappConfig.phoneNumberId && (
         <Card className="border-yellow-500/50 bg-yellow-500/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
@@ -187,25 +188,22 @@ export const WhatsAppManager = () => {
               إعداد غير مكتمل
             </CardTitle>
             <CardDescription className="text-yellow-700 dark:text-yellow-400">
-              Phone Number ID غير محدد
+              بيانات API غير مكتملة
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm mb-4">
-              يجب إضافة <code className="bg-background px-2 py-1 rounded">VITE_WHATSAPP_PHONE_NUMBER_ID</code> في ملف <code className="bg-background px-2 py-1 rounded">.env.local</code>
+              يجب إضافة بيانات Green API أو Facebook API في ملف <code className="bg-background px-2 py-1 rounded">.env.local</code>
             </p>
             <div className="space-y-2 text-sm">
-              <p className="font-medium">خطوات الحصول على Phone Number ID:</p>
-              <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                <li>اذهب إلى <a href="https://developers.facebook.com/" target="_blank" rel="noopener noreferrer" className="text-primary underline">Facebook Developers</a></li>
-                <li>اختر تطبيقك (App ID: {whatsappConfig.appId || "غير محدد"})</li>
-                <li>اذهب إلى <strong>WhatsApp</strong> → <strong>API Setup</strong></li>
-                <li>انسخ <strong>Phone number ID</strong> من قسم "From"</li>
-                <li>أضفه في ملف <code className="bg-background px-1 rounded">.env.local</code></li>
-                <li>أعد تشغيل خادم التطوير</li>
-              </ol>
+              <p className="font-medium">لـ Green API:</p>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <li><code className="bg-background px-1 rounded">VITE_GREEN_API_URL</code></li>
+                <li><code className="bg-background px-1 rounded">VITE_GREEN_ID_INSTANCE</code></li>
+                <li><code className="bg-background px-1 rounded">VITE_GREEN_API_TOKEN</code></li>
+              </ul>
               <p className="mt-4 text-xs text-muted-foreground">
-                راجع ملف <code className="bg-background px-1 rounded">WHATSAPP_BUSINESS_SETUP.md</code> للخطوات التفصيلية
+                راجع ملف <code className="bg-background px-1 rounded">GREEN_API_SETUP.md</code> للخطوات التفصيلية
               </p>
             </div>
           </CardContent>
@@ -220,38 +218,71 @@ export const WhatsAppManager = () => {
             معلومات الإعداد
           </CardTitle>
           <CardDescription>
-            تحقق من إعدادات WhatsApp Business API
+            {greenApiConfig.apiUrl ? "Green API" : "Facebook WhatsApp Business API"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">App ID</p>
-              <p className="font-mono text-sm">
-                {whatsappConfig.appId || "غير محدد"}
-              </p>
+          {greenApiConfig.apiUrl ? (
+            // عرض معلومات Green API
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">API URL</p>
+                <p className="font-mono text-sm">
+                  {greenApiConfig.apiUrl || "غير محدد"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">ID Instance</p>
+                <p className={`font-mono text-sm ${!greenApiConfig.idInstance ? "text-destructive" : ""}`}>
+                  {greenApiConfig.idInstance || "⚠️ غير محدد"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">API Token</p>
+                <p className="font-mono text-sm truncate">
+                  {greenApiConfig.apiToken
+                    ? `${greenApiConfig.apiToken.substring(0, 20)}...`
+                    : "غير محدد"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Phone Number</p>
+                <p className="font-mono text-sm">
+                  967778076543
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Phone Number ID</p>
-              <p className={`font-mono text-sm ${!whatsappConfig.phoneNumberId ? "text-destructive" : ""}`}>
-                {whatsappConfig.phoneNumberId || "⚠️ غير محدد"}
-              </p>
+          ) : (
+            // عرض معلومات Facebook API
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">App ID</p>
+                <p className="font-mono text-sm">
+                  {whatsappConfig.appId || "غير محدد"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Phone Number ID</p>
+                <p className={`font-mono text-sm ${!whatsappConfig.phoneNumberId ? "text-destructive" : ""}`}>
+                  {whatsappConfig.phoneNumberId || "⚠️ غير محدد"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Business Account ID</p>
+                <p className="font-mono text-sm">
+                  {whatsappConfig.businessAccountId || "غير محدد"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Access Token</p>
+                <p className="font-mono text-sm truncate">
+                  {whatsappConfig.accessToken
+                    ? `${whatsappConfig.accessToken.substring(0, 20)}...`
+                    : "غير محدد"}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Business Account ID</p>
-              <p className="font-mono text-sm">
-                {whatsappConfig.businessAccountId || "غير محدد"}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Access Token</p>
-              <p className="font-mono text-sm truncate">
-                {whatsappConfig.accessToken
-                  ? `${whatsappConfig.accessToken.substring(0, 20)}...`
-                  : "غير محدد"}
-              </p>
-            </div>
-          </div>
+          )}
 
           <div className="flex flex-wrap gap-2">
             <Button

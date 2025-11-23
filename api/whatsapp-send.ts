@@ -1,4 +1,4 @@
-// API endpoint لإرسال رسائل WhatsApp (لتجنب مشاكل CORS)
+// API endpoint لإرسال رسائل WhatsApp عبر Green API (لتجنب مشاكل CORS)
 
 export default async function handler(req: any, res: any) {
   // السماح فقط بـ POST requests
@@ -7,19 +7,24 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  // الحصول على المتغيرات من environment variables
-  const WHATSAPP_ACCESS_TOKEN = process.env.VITE_WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN;
-  const WHATSAPP_PHONE_NUMBER_ID = process.env.VITE_WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const WHATSAPP_GRAPH_API_BASE = 'https://graph.facebook.com/v22.0';
+  // الحصول على متغيرات Green API من environment variables
+  const GREEN_API_URL = process.env.VITE_GREEN_API_URL || process.env.GREEN_API_URL;
+  const GREEN_ID_INSTANCE = process.env.VITE_GREEN_ID_INSTANCE || process.env.GREEN_ID_INSTANCE;
+  const GREEN_API_TOKEN = process.env.VITE_GREEN_API_TOKEN || process.env.GREEN_API_TOKEN;
 
   // التحقق من وجود المتغيرات المطلوبة
-  if (!WHATSAPP_ACCESS_TOKEN) {
-    res.status(500).json({ error: 'WHATSAPP_ACCESS_TOKEN غير محدد في environment variables' });
+  if (!GREEN_API_URL) {
+    res.status(500).json({ error: 'GREEN_API_URL غير محدد في environment variables' });
     return;
   }
 
-  if (!WHATSAPP_PHONE_NUMBER_ID) {
-    res.status(500).json({ error: 'WHATSAPP_PHONE_NUMBER_ID غير محدد في environment variables' });
+  if (!GREEN_ID_INSTANCE) {
+    res.status(500).json({ error: 'GREEN_ID_INSTANCE غير محدد في environment variables' });
+    return;
+  }
+
+  if (!GREEN_API_TOKEN) {
+    res.status(500).json({ error: 'GREEN_API_TOKEN غير محدد في environment variables' });
     return;
   }
 
@@ -41,26 +46,30 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
+    // Green API يتطلب تنسيق الرقم بالصيغة الدولية (بدون +)
+    const formattedPhone = cleanPhoneNumber.startsWith('00') 
+      ? cleanPhoneNumber.substring(2) 
+      : cleanPhoneNumber;
+
     // بناء البيانات حسب نوع الرسالة
     let requestData: any;
+    let apiEndpoint: string;
     
     if (type === 'template') {
-      if (!templateName) {
-        res.status(400).json({ error: 'اسم القالب مطلوب' });
+      // Green API لا يدعم templates بنفس طريقة Facebook API
+      // سنستخدم رسالة نصية عادية بدلاً منها
+      if (!message && !templateName) {
+        res.status(400).json({ error: 'الرسالة أو اسم القالب مطلوب' });
         return;
       }
       
+      // استخدام الرسالة إذا كانت موجودة، وإلا استخدام اسم القالب كنص
+      const messageText = message || `Template: ${templateName}`;
       requestData = {
-        messaging_product: 'whatsapp',
-        to: cleanPhoneNumber,
-        type: 'template',
-        template: {
-          name: templateName,
-          language: {
-            code: templateLanguage || 'en_US',
-          },
-        },
+        chatId: `${formattedPhone}@c.us`, // Green API format: {phone}@c.us
+        message: messageText,
       };
+      apiEndpoint = 'sendMessage';
     } else {
       if (!message) {
         res.status(400).json({ error: 'الرسالة مطلوبة' });
@@ -68,22 +77,17 @@ export default async function handler(req: any, res: any) {
       }
       
       requestData = {
-        messaging_product: 'whatsapp',
-        recipient_type: 'individual',
-        to: cleanPhoneNumber,
-        type: 'text',
-        text: {
-          preview_url: false,
-          body: message,
-        },
+        chatId: `${formattedPhone}@c.us`, // Green API format: {phone}@c.us
+        message: message,
       };
+      apiEndpoint = 'sendMessage';
     }
 
-    // إرسال الطلب إلى Facebook Graph API
-    const url = `${WHATSAPP_GRAPH_API_BASE}/${WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    // إرسال الطلب إلى Green API
+    const url = `${GREEN_API_URL}/waInstance${GREEN_ID_INSTANCE}/${apiEndpoint}/${GREEN_API_TOKEN}`;
     
-    console.log('WhatsApp API Request:', {
-      url: url,
+    console.log('Green API Request:', {
+      url: url.replace(GREEN_API_TOKEN, '***'),
       method: 'POST',
       data: requestData,
     });
@@ -91,7 +95,6 @@ export default async function handler(req: any, res: any) {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestData),
@@ -117,23 +120,23 @@ export default async function handler(req: any, res: any) {
     });
 
     if (!response.ok) {
-      const errorMessage = responseData.error?.message || 
-                          responseData.error?.error_user_msg || 
+      const errorMessage = responseData.error || 
+                          responseData.errorMessage ||
                           JSON.stringify(responseData);
       res.status(response.status).json({ 
-        error: `WhatsApp API Error: ${errorMessage}`,
+        error: `Green API Error: ${errorMessage}`,
         details: responseData,
       });
       return;
     }
 
-    // التحقق من وجود أخطاء في الاستجابة
-    if (responseData.error) {
-      const errorMessage = responseData.error.message || 
-                          responseData.error.error_user_msg || 
-                          JSON.stringify(responseData.error);
+    // Green API قد يعيد success: false حتى مع status 200
+    if (responseData.success === false) {
+      const errorMessage = responseData.error || 
+                          responseData.errorMessage ||
+                          'Unknown error';
       res.status(400).json({ 
-        error: `WhatsApp API Error: ${errorMessage}`,
+        error: `Green API Error: ${errorMessage}`,
         details: responseData,
       });
       return;

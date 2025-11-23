@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { Database, MessageSquare } from "lucide-react"
+import { Database, MessageSquare, Inbox } from "lucide-react"
 
 interface SidebarProps {
   selectedTable: string | null
   onTableSelect: (tableName: string) => void
-  selectedView?: "table" | "whatsapp"
-  onViewSelect?: (view: "table" | "whatsapp") => void
+  selectedView?: "table" | "whatsapp" | "messages"
+  onViewSelect?: (view: "table" | "whatsapp" | "messages") => void
 }
 
 export const Sidebar = ({ selectedTable, onTableSelect, selectedView = "table", onViewSelect }: SidebarProps) => {
@@ -46,18 +46,32 @@ export const Sidebar = ({ selectedTable, onTableSelect, selectedView = "table", 
       <h2 className="text-lg font-semibold mb-4 text-foreground">القوائم</h2>
       <nav className="space-y-2">
         {onViewSelect && (
-          <button
-            onClick={() => onViewSelect("whatsapp")}
-            className={cn(
-              "w-full text-right px-4 py-2 rounded-md text-sm transition-colors flex items-center gap-2",
-              selectedView === "whatsapp"
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-accent text-foreground"
-            )}
-          >
-            <MessageSquare className="h-4 w-4" />
-            WhatsApp Business
-          </button>
+          <>
+            <button
+              onClick={() => onViewSelect("whatsapp")}
+              className={cn(
+                "w-full text-right px-4 py-2 rounded-md text-sm transition-colors flex items-center gap-2",
+                selectedView === "whatsapp"
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-accent text-foreground"
+              )}
+            >
+              <MessageSquare className="h-4 w-4" />
+              إرسال رسائل
+            </button>
+            <button
+              onClick={() => onViewSelect("messages")}
+              className={cn(
+                "w-full text-right px-4 py-2 rounded-md text-sm transition-colors flex items-center gap-2",
+                selectedView === "messages"
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-accent text-foreground"
+              )}
+            >
+              <Inbox className="h-4 w-4" />
+              الرسائل الواردة
+            </button>
+          </>
         )}
         <div className="pt-2 border-t border-border mt-2">
           <h3 className="text-sm font-medium mb-2 text-muted-foreground">الجداول</h3>

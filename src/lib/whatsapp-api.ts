@@ -158,30 +158,68 @@ export async function whatsappApiPost<T = any>(
 
 /**
  * إرسال رسالة نصية عبر WhatsApp
+ * يستخدم Green API أو Facebook API حسب الإعداد
  */
 export async function sendWhatsAppTextMessage(
   to: string,
   message: string
 ) {
-  if (!WHATSAPP_PHONE_NUMBER_ID) {
-    throw new Error('WHATSAPP_PHONE_NUMBER_ID غير محدد. يرجى إضافة VITE_WHATSAPP_PHONE_NUMBER_ID في ملف .env.local. راجع ملف WHATSAPP_BUSINESS_SETUP.md للخطوات التفصيلية.');
-  }
-
   console.log('📤 إرسال رسالة نصية:', { to, messageLength: message.length });
 
-  return whatsappApiPost(
-    `/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
-    {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      to: to,
-      type: 'text',
-      text: {
-        preview_url: false,
-        body: message,
+  // محاولة استخدام API endpoint أولاً (لتجنب CORS)
+  try {
+    const apiUrl = '/api/whatsapp-send';
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        to,
+        message,
+        type: 'text',
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || 'API endpoint failed');
     }
-  );
+  } catch (apiError: any) {
+    // إذا فشل API endpoint، نستخدم Green API مباشرة (إذا كان متوفراً)
+    const GREEN_API_URL = import.meta.env.VITE_GREEN_API_URL as string;
+    const GREEN_ID_INSTANCE = import.meta.env.VITE_GREEN_ID_INSTANCE as string;
+    const GREEN_API_TOKEN = import.meta.env.VITE_GREEN_API_TOKEN as string;
+    
+    if (GREEN_API_URL && GREEN_ID_INSTANCE && GREEN_API_TOKEN) {
+      console.log('📤 Using direct Green API call');
+      const { sendGreenApiTextMessage } = await import('./green-api');
+      return sendGreenApiTextMessage(to, message);
+    }
+    
+    // إذا لم يكن Green API متوفراً، نستخدم Facebook API (إذا كان متوفراً)
+    if (WHATSAPP_PHONE_NUMBER_ID) {
+      console.log('📤 Using direct Facebook API call');
+      return whatsappApiPost(
+        `/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+        {
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to: to,
+          type: 'text',
+          text: {
+            preview_url: false,
+            body: message,
+          },
+        }
+      );
+    }
+    
+    throw new Error('لا توجد بيانات API متوفرة. يرجى إضافة Green API أو Facebook API credentials.');
+  }
 }
 
 /**
@@ -326,6 +364,8 @@ export async function getMessageTemplates() {
 
 /**
  * إرسال رسالة باستخدام قالب (Template Message)
+ * ملاحظة: Green API لا يدعم templates بنفس طريقة Facebook API
+ * سيتم إرسال رسالة نصية عادية بدلاً منها
  */
 export async function sendTemplateMessage(
   to: string,
@@ -333,34 +373,73 @@ export async function sendTemplateMessage(
   languageCode: string = 'ar',
   parameters?: Array<{ type: string; text?: string; image?: { link: string } }>
 ) {
-  if (!WHATSAPP_PHONE_NUMBER_ID) {
-    throw new Error('WHATSAPP_PHONE_NUMBER_ID غير محدد');
-  }
-
   console.log('📤 إرسال Template Message:', { to, templateName, languageCode });
 
-  const templateData: any = {
-    messaging_product: 'whatsapp',
-    to: to,
-    type: 'template',
-    template: {
-      name: templateName,
-      language: {
-        code: languageCode,
+  // محاولة استخدام API endpoint أولاً (لتجنب CORS)
+  try {
+    const apiUrl = '/api/whatsapp-send';
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    },
-  };
+      body: JSON.stringify({
+        to,
+        type: 'template',
+        templateName,
+        templateLanguage: languageCode,
+      }),
+    });
 
-  if (parameters && parameters.length > 0) {
-    templateData.template.components = [
-      {
-        type: 'body',
-        parameters: parameters,
-      },
-    ];
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || 'API endpoint failed');
+    }
+  } catch (apiError: any) {
+    // Green API لا يدعم templates، لذا نستخدم رسالة نصية عادية
+    const GREEN_API_URL = import.meta.env.VITE_GREEN_API_URL as string;
+    const GREEN_ID_INSTANCE = import.meta.env.VITE_GREEN_ID_INSTANCE as string;
+    const GREEN_API_TOKEN = import.meta.env.VITE_GREEN_API_TOKEN as string;
+    
+    if (GREEN_API_URL && GREEN_ID_INSTANCE && GREEN_API_TOKEN) {
+      console.log('📤 Green API does not support templates, sending as text message');
+      const { sendGreenApiTextMessage } = await import('./green-api');
+      const messageText = `Template: ${templateName}`;
+      return sendGreenApiTextMessage(to, messageText);
+    }
+    
+    // إذا كان Facebook API متوفراً، نستخدمه
+    if (WHATSAPP_PHONE_NUMBER_ID) {
+      console.log('📤 Using direct Facebook API call for template');
+      const templateData: any = {
+        messaging_product: 'whatsapp',
+        to: to,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: {
+            code: languageCode,
+          },
+        },
+      };
+
+      if (parameters && parameters.length > 0) {
+        templateData.template.components = [
+          {
+            type: 'body',
+            parameters: parameters,
+          },
+        ];
+      }
+
+      return whatsappApiPost(`/${WHATSAPP_PHONE_NUMBER_ID}/messages`, templateData);
+    }
+    
+    throw new Error('لا توجد بيانات API متوفرة. يرجى إضافة Green API أو Facebook API credentials.');
   }
-
-  return whatsappApiPost(`/${WHATSAPP_PHONE_NUMBER_ID}/messages`, templateData);
 }
 
 /**
