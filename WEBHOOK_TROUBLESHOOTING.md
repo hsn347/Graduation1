@@ -23,8 +23,10 @@
   ```
   https://your-project-name.vercel.app/api/facebook-webhook
   ```
+- **مثال**: `https://graduation-aeua7j9w1-hsns-projects-3ab61095.vercel.app/api/facebook-webhook`
 - تأكد من استخدام **HTTPS** وليس HTTP
 - تأكد من عدم وجود `/` في النهاية
+- ⚠️ **مهم**: لا تضع `@` في بداية URL
 
 #### 4. التحقق من Logs في Vercel
 

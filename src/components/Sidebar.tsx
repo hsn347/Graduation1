@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { Database } from "lucide-react"
+import { Database, MessageSquare } from "lucide-react"
 
 interface SidebarProps {
   selectedTable: string | null
   onTableSelect: (tableName: string) => void
+  selectedView?: "table" | "whatsapp"
+  onViewSelect?: (view: "table" | "whatsapp") => void
 }
 
-export const Sidebar = ({ selectedTable, onTableSelect }: SidebarProps) => {
+export const Sidebar = ({ selectedTable, onTableSelect, selectedView = "table", onViewSelect }: SidebarProps) => {
   const [tables, setTables] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -41,23 +43,40 @@ export const Sidebar = ({ selectedTable, onTableSelect }: SidebarProps) => {
 
   return (
     <aside className="w-64 border-r border-border bg-card p-4">
-      <h2 className="text-lg font-semibold mb-4 text-foreground">الجداول</h2>
+      <h2 className="text-lg font-semibold mb-4 text-foreground">القوائم</h2>
       <nav className="space-y-2">
-        {tables.map((table) => (
+        {onViewSelect && (
           <button
-            key={table}
-            onClick={() => onTableSelect(table)}
+            onClick={() => onViewSelect("whatsapp")}
             className={cn(
               "w-full text-right px-4 py-2 rounded-md text-sm transition-colors flex items-center gap-2",
-              selectedTable === table
+              selectedView === "whatsapp"
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-accent text-foreground"
             )}
           >
-            <Database className="h-4 w-4" />
-            {table}
+            <MessageSquare className="h-4 w-4" />
+            WhatsApp Business
           </button>
-        ))}
+        )}
+        <div className="pt-2 border-t border-border mt-2">
+          <h3 className="text-sm font-medium mb-2 text-muted-foreground">الجداول</h3>
+          {tables.map((table) => (
+            <button
+              key={table}
+              onClick={() => onTableSelect(table)}
+              className={cn(
+                "w-full text-right px-4 py-2 rounded-md text-sm transition-colors flex items-center gap-2",
+                selectedTable === table && selectedView === "table"
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-accent text-foreground"
+              )}
+            >
+              <Database className="h-4 w-4" />
+              {table}
+            </button>
+          ))}
+        </div>
       </nav>
     </aside>
   )

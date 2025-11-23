@@ -10,6 +10,12 @@ https://your-project-name.vercel.app/api/facebook-webhook
 ```
 (استبدل `your-project-name` باسم مشروعك في Vercel)
 
+**مثال**: إذا كان URL موقعك هو `https://graduation-aeua7j9w1-hsns-projects-3ab61095.vercel.app`
+فإن URL الـ webhook سيكون:
+```
+https://graduation-aeua7j9w1-hsns-projects-3ab61095.vercel.app/api/facebook-webhook
+```
+
 ### 2. إعداد متغير البيئة في Vercel
 
 1. اذهب إلى **Vercel Dashboard** → **Settings** → **Environment Variables**
