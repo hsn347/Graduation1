@@ -1,10 +1,13 @@
+import { useState } from "react"
 import { Dashboard } from "./pages/Dashboard"
+import { ChatPage } from "./pages/ChatPage"
 import { useAuth } from "./context/AuthContext1"
 import { Button } from "./components/ui/button"
 import { Loader2 } from "lucide-react"
 
 function App() {
   const { user, loading, signInWithGithub } = useAuth()
+  const [showDashboard, setShowDashboard] = useState(false)
 
   if (loading) {
     return (
@@ -25,6 +28,10 @@ function App() {
         </div>
       </div>
     )
+  }
+
+  if (!showDashboard) {
+    return <ChatPage onEnterDashboard={() => setShowDashboard(true)} />
   }
 
   return <Dashboard />
