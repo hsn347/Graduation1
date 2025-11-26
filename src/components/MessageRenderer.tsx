@@ -1,3 +1,4 @@
+import React from "react"
 import { BookOpen, Calendar, Clock, MapPin, User, GraduationCap, Sparkles } from "lucide-react"
 
 interface MessageRendererProps {
@@ -9,7 +10,7 @@ export const MessageRenderer = ({ text }: MessageRendererProps) => {
   // معالجة النص مع دعم Markdown والأيقونات
   const renderContent = () => {
     const lines = text.split("\n")
-    const result: JSX.Element[] = []
+    const result: React.ReactElement[] = []
     let listItems: string[] = []
     let listKey = 0
 
@@ -66,7 +67,7 @@ export const MessageRenderer = ({ text }: MessageRendererProps) => {
 
   // معالجة سطر واحد مع Markdown والأيقونات
   const renderLine = (line: string) => {
-    const parts: (string | JSX.Element)[] = []
+    const parts: (string | React.ReactElement)[] = []
     let lastIndex = 0
 
     // معالجة **text** للعناوين المهمة
@@ -103,12 +104,12 @@ export const MessageRenderer = ({ text }: MessageRendererProps) => {
   }
 
   // معالجة Emojis وتحويلها إلى أيقونات React
-  const processEmojis = (text: string): (string | JSX.Element)[] => {
-    const parts: (string | JSX.Element)[] = []
+  const processEmojis = (text: string): (string | React.ReactElement)[] => {
+    const parts: (string | React.ReactElement)[] = []
     let lastIndex = 0
 
     // أيقونات مدعومة
-    const iconMap: { [key: string]: JSX.Element } = {
+    const iconMap: { [key: string]: React.ReactElement } = {
       "📚": <BookOpen className="inline w-4 h-4 mx-1 align-middle" />,
       "📅": <Calendar className="inline w-4 h-4 mx-1 align-middle" />,
       "🎓": <GraduationCap className="inline w-4 h-4 mx-1 align-middle" />,
