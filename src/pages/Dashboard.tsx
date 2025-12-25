@@ -14,7 +14,13 @@ export const Dashboard = () => {
           selectedTable={selectedTable}
           onTableSelect={setSelectedTable}
         />
+        <Sidebar
+          selectedTable={selectedTable}
+          onTableSelect={setSelectedTable}
+        />
+        
         <TableDataView tableName={selectedTable} />
+        <TableDataView tableName={"whatsapp_api_stats"} />
       </div>
     </div>
   )
