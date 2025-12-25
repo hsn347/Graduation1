@@ -12,4 +12,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    port: 5346, // البورت الذي تريده
+    strictPort: false, // يرفض البدء إذا البورت مستخدم
+  },
 })

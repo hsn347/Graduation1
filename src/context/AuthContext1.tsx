@@ -51,8 +51,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (error) throw error;
           if (session) {
             setUser(session.user);
-            // تنظيف URL
-            window.history.replaceState(null, '', window.location.pathname);
+            // تنظيف URL وإعادة التوجيه إلى الصفحة الرئيسية
+            const currentPath = window.location.pathname;
+            window.history.replaceState(null, '', '/');
+            // إذا كان المستخدم في صفحة أخرى غير الصفحة الرئيسية، إعادة التوجيه
+            if (currentPath !== '/') {
+              window.location.pathname = '/';
+            }
           }
         } else {
           // محاولة جلب الجلسة العادية
@@ -80,9 +85,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       setLoading(false);
       
-      // تنظيف URL بعد المصادقة الناجحة
-      if (event === 'SIGNED_IN' && window.location.hash) {
-        window.history.replaceState(null, '', window.location.pathname);
+      // تنظيف URL وإعادة التوجيه إلى الصفحة الرئيسية بعد المصادقة الناجحة
+      if (event === 'SIGNED_IN') {
+        if (window.location.hash) {
+          window.history.replaceState(null, '', '/');
+        }
+        // إذا كان المستخدم في صفحة أخرى غير الصفحة الرئيسية، إعادة التوجيه
+        if (window.location.pathname !== '/') {
+          window.location.pathname = '/';
+        }
       }
     });
 
@@ -93,9 +104,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   const signInWithGithub = async () => {
     try {
-      // الحصول على URL الحالي بشكل صحيح
-      const currentUrl = window.location.href.split('#')[0].split('?')[0];
-      const redirectTo = currentUrl.endsWith('/') ? currentUrl : `${currentUrl}/`;
+      // دائماً إعادة التوجيه إلى الصفحة الرئيسية بعد تسجيل الدخول
+      const baseUrl = window.location.origin;
+      const redirectTo = `${baseUrl}/`;
       
       console.log('Redirecting to:', redirectTo);
       
