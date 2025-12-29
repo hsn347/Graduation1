@@ -2,10 +2,9 @@ import { useState } from "react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Upload, Loader2, X, CheckCircle2 } from "lucide-react"
-import { supabase } from "@/CliantSupa"
+import { saveRagDocument } from "@/services/rag"
 
 interface PDFUploaderProps {
-  tableName: string
   onSuccess: () => void
   onCancel: () => void
 }
@@ -22,7 +21,6 @@ interface ExtractedData {
 }
 
 export const PDFUploader = ({
-  tableName,
   onSuccess,
   onCancel,
 }: PDFUploaderProps) => {
@@ -158,17 +156,8 @@ export const PDFUploader = ({
     }
   }
 
-  const saveToSupabase = async (data: ExtractedData[]) => {
-    try {
-      const { error } = await supabase.from(tableName).insert(data)
-
-      if (error) throw error
-
-      return data.length
-    } catch (error: any) {
-      console.error("Error saving to Supabase:", error)
-      throw new Error(`خطأ في حفظ البيانات: ${error.message}`)
-    }
+  const buildLectureText = (record: ExtractedData) => {
+    return `محاضرة: ${record.lecture_title} - القسم: ${record.department} - المستوى: ${record.level} - اليوم: ${record.day} - الوقت: ${record.lecture_time} - الدكتور: ${record.instructor} - القاعة: ${record.room} - نوع الدراسة: ${record.study_type}`
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -231,10 +220,20 @@ export const PDFUploader = ({
         throw new Error("لم يتم استخراج أي بيانات من الملفات")
       }
 
-      // حفظ جميع البيانات في Supabase
-      const count = await saveToSupabase(allExtractedData)
+      // إنشاء مستند RAG لكل سطر محاضرة مباشرة في جدول documents
+      await Promise.all(
+        allExtractedData.map((record) =>
+          saveRagDocument({
+            content: buildLectureText(record),
+            metadata: {
+              source: "pdf_upload",
+              ...record,
+            },
+          })
+        )
+      )
 
-      setExtractedCount(count)
+      setExtractedCount(allExtractedData.length)
       setSuccess(true)
       setFiles([])
 
