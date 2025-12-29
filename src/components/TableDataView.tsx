@@ -6,11 +6,16 @@ import { Upload, Loader2, Trash2, AlertTriangle, PenTool } from "lucide-react"
 import { PDFUploader } from "./PDFUploader"
 import { ManualEntry } from "./ManualEntry"
 
-interface DocumentRow {
-  id: number
-  content: string
-  metadata: Record<string, any> | null
-  embedding?: number[]
+interface LectureSchedule {
+  id?: number
+  department: string
+  lecture_time: string
+  day: string
+  level: string
+  lecture_title: string
+  instructor: string
+  room: string
+  study_type: string
   created_at?: string
 }
 
@@ -19,7 +24,7 @@ interface TableDataViewProps {
 }
 
 export const TableDataView = ({ tableName }: TableDataViewProps) => {
-  const [data, setData] = useState<DocumentRow[]>([])
+  const [data, setData] = useState<LectureSchedule[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showUploader, setShowUploader] = useState(false)
@@ -43,7 +48,7 @@ export const TableDataView = ({ tableName }: TableDataViewProps) => {
       const { data: fetchedData, error: fetchError } = await supabase
         .from(tableName)
         .select("*")
-        .order("id", { ascending: false })
+        .order("created_at", { ascending: false })
 
       if (fetchError) throw fetchError
 
@@ -212,6 +217,7 @@ export const TableDataView = ({ tableName }: TableDataViewProps) => {
           </CardHeader>
           <CardContent>
             <ManualEntry
+              tableName={tableName}
               onSuccess={handleDataAdded}
               onCancel={() => setShowManualEntry(false)}
             />
@@ -226,6 +232,7 @@ export const TableDataView = ({ tableName }: TableDataViewProps) => {
           </CardHeader>
           <CardContent>
             <PDFUploader
+              tableName={tableName}
               onSuccess={handleDataAdded}
               onCancel={() => setShowUploader(false)}
             />
@@ -279,30 +286,58 @@ export const TableDataView = ({ tableName }: TableDataViewProps) => {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-right p-4 text-sm font-semibold text-foreground">
-                      رقم
+                      القسم
                     </th>
                     <th className="text-right p-4 text-sm font-semibold text-foreground">
-                      المحتوى
+                      وقت المحاضرة
                     </th>
                     <th className="text-right p-4 text-sm font-semibold text-foreground">
-                      تفاصيل (metadata)
+                      اليوم
+                    </th>
+                    <th className="text-right p-4 text-sm font-semibold text-foreground">
+                      المستوى
+                    </th>
+                    <th className="text-right p-4 text-sm font-semibold text-foreground">
+                      المادة
+                    </th>
+                    <th className="text-right p-4 text-sm font-semibold text-foreground">
+                      الدكتور
+                    </th>
+                    <th className="text-right p-4 text-sm font-semibold text-foreground">
+                      القاعة
+                    </th>
+                    <th className="text-right p-4 text-sm font-semibold text-foreground">
+                      نوع الدراسة
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {data.map((row) => (
+                  {data.map((row, index) => (
                     <tr
-                      key={row.id}
+                      key={row.id || index}
                       className="border-b border-border hover:bg-accent/50 transition-colors"
                     >
                       <td className="p-4 text-sm text-foreground">
-                        {row.id}
+                        {row.department}
                       </td>
-                      <td className="p-4 text-sm text-foreground max-w-md truncate">
-                        {row.content}
+                      <td className="p-4 text-sm text-foreground">
+                        {row.lecture_time}
                       </td>
-                      <td className="p-4 text-xs text-muted-foreground max-w-md truncate">
-                        {row.metadata ? JSON.stringify(row.metadata) : "-"}
+                      <td className="p-4 text-sm text-foreground">{row.day}</td>
+                      <td className="p-4 text-sm text-foreground">
+                        {row.level}
+                      </td>
+                      <td className="p-4 text-sm text-foreground">
+                        {row.lecture_title}
+                      </td>
+                      <td className="p-4 text-sm text-foreground">
+                        {row.instructor}
+                      </td>
+                      <td className="p-4 text-sm text-foreground">
+                        {row.room}
+                      </td>
+                      <td className="p-4 text-sm text-foreground">
+                        {row.study_type || "-"}
                       </td>
                     </tr>
                   ))}

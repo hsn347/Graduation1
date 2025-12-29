@@ -3,7 +3,7 @@ import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Select } from "./ui/select"
 import { Loader2, Save, X, Plus } from "lucide-react"
-import { saveRagDocument } from "@/services/rag"
+import { supabase } from "@/CliantSupa"
 
 interface ExtractedData {
   department: string
@@ -17,11 +17,13 @@ interface ExtractedData {
 }
 
 interface ManualEntryProps {
+  tableName: string
   onSuccess: () => void
   onCancel: () => void
 }
 
 export const ManualEntry = ({
+  tableName,
   onSuccess,
   onCancel,
 }: ManualEntryProps) => {
@@ -69,10 +71,6 @@ export const ManualEntry = ({
     setRecords(updated)
   }
 
-  const buildLectureText = (record: ExtractedData) => {
-    return `محاضرة: ${record.lecture_title} - القسم: ${record.department} - المستوى: ${record.level} - اليوم: ${record.day} - الوقت: ${record.lecture_time} - الدكتور: ${record.instructor} - القاعة: ${record.room} - نوع الدراسة: ${record.study_type}`
-  }
-
   const handleSave = async () => {
     // التحقق من صحة البيانات
     const validRecords = records.filter(
@@ -97,18 +95,11 @@ export const ManualEntry = ({
     setSuccess(false)
 
     try {
-      // إنشاء مستند RAG لكل سطر محاضرة مباشرة في جدول documents
-      await Promise.all(
-        validRecords.map((record) =>
-          saveRagDocument({
-            content: buildLectureText(record),
-            metadata: {
-              source: "manual_entry",
-              ...record,
-            },
-          })
-        )
-      )
+      const { error: insertError } = await supabase
+        .from(tableName)
+        .insert(validRecords)
+
+      if (insertError) throw insertError
 
       setSuccess(true)
       setRecords([

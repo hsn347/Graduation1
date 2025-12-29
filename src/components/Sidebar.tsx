@@ -16,13 +16,13 @@ export const Sidebar = ({ selectedTable, onTableSelect }: SidebarProps) => {
       try {
         // طريقة بديلة: جلب الجداول من information_schema
         // لكن Supabase لا يدعم ذلك مباشرة، لذا سنستخدم قائمة ثابتة للبداية
-        // هنا نستخدم جدول documents الخاص بالـ RAG
-        const defaultTables = ["documents"] // جدول RAG الرئيسي
+        // يمكن إضافة جداول أخرى لاحقاً
+        const defaultTables = ["lectures", "Students","Classes"] // الجدول الأساسي
         setTables(defaultTables)
       } catch (error) {
         console.error("Error fetching tables:", error)
         // في حالة الخطأ، نستخدم الجدول الافتراضي
-        setTables(["documents"])
+        setTables(["lectures"])
       } finally {
         setLoading(false)
       }
